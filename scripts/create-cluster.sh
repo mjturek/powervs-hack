@@ -39,7 +39,8 @@ function init_ibmcloud()
 }
 
 declare -a ENV_VARS
-ENV_VARS=( "BASEDOMAIN" "CLUSTER_DIR" "CLUSTER_NAME" "IBMCLOUD_API_KEY" "IBMCLOUD_OCCMICCC_API_KEY" "IBMCLOUD_OIOCCC_API_KEY" "IBMCLOUD_OCCDIPCCC_API_KEY" "IBMCLOUD_OMAPCC_API_KEY" "IBMID" "POWERVS_REGION" "POWERVS_ZONE" "RESOURCE_GROUP" "SERVICE_INSTANCE_GUID" "VPCREGION" )
+ENV_VARS=( "BASEDOMAIN" "CLUSTER_DIR" "CLUSTER_NAME" "IBMCLOUD_API_KEY" "IBMCLOUD_OCCMICCC_API_KEY" "IBMCLOUD_OIOCCC_API_KEY" "IBMCLOUD_OCCDIPCCC_API_KEY" "IBMCLOUD_OMAPCC_API_KEY" "IBMID" "POWERVS_REGION" "POWERVS_ZONE" "RESOURCE_GROUP"  "VPCREGION" )
+OPT_VARS=( "SERVICE_INSTANCE_GUID" )
 
 for VAR in ${ENV_VARS[@]}
 do
@@ -62,7 +63,7 @@ set -euo pipefail
 # export IBMCLOUD_REGION=${VPCREGION} # ${POWERVS_REGION}
 # export IBMCLOUD_ZONE=${POWERVS_ZONE}
 
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.11.4-ppc64le"
+#export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.11.4-ppc64le"
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.12.0-ec.2-ppc64le"
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="registry.ci.openshift.org/ocp-ppc64le/release-ppc64le:4.12.0-0.nightly-ppc64le-2022-09-07-153137"
 
@@ -117,6 +118,10 @@ then
 fi
 
 #
+# If using an existing service instance, perform some checks
+#
+if [ -n ${SERVICE_INSTANCE_GUID} ]; then
+#
 # Quota check cloud connections
 #
 CONNECTIONS=$(ibmcloud pi connections --json | jq -r '.Payload.cloudConnections|length')
@@ -162,6 +167,9 @@ fi
 declare -a JOBS
 
 trap 'echo "Killing JOBS"; for PID in ${JOBS[@]}; do kill -9 ${PID} >/dev/null 2>&1 || true; done' TERM
+
+# End service instance checks if block
+fi
 
 #
 # Recreate saved installer PowerVS session data
@@ -229,7 +237,7 @@ networking:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
   machineNetwork:
-  - cidr: 192.168.0.0/16
+  - cidr: ${MACHINE_SUBNET}
   networkType: OpenShiftSDN
   serviceNetwork:
   - 172.30.0.0/16
@@ -238,11 +246,8 @@ platform:
     userID: ${IBMID}
     powervsResourceGroup: ${RESOURCE_GROUP}
     region: ${POWERVS_REGION}
-#   vpcRegion: ${VPCREGION}
     zone: ${POWERVS_ZONE}
-    serviceInstanceID: ${SERVICE_INSTANCE_GUID}
 publish: External
-#publish: Internal
 pullSecret: '${PULL_SECRET}'
 sshKey: |
   ${SSH_KEY}

@@ -76,7 +76,6 @@ set -euo pipefail
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.12.29-ppc64le"
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.13.9-ppc64le"
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/psundara/openshift-release:powervs-ci-emptydir"
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="registry.ci.openshift.org/ocp-ppc64le/release-ppc64le:4.14.0-0.nightly-ppc64le-2023-08-10-111232"
 
 export PATH=${PATH}:$(pwd)/bin
 export BASE64_API_KEY=$(echo -n ${IBMCLOUD_API_KEY} | base64)
@@ -316,9 +315,11 @@ platform:
     powervsResourceGroup: ${RESOURCE_GROUP}
     region: ${POWERVS_REGION}
 #   vpcRegion: ${VPCREGION}
+    vpcName: rdr-ipi-mjturek-test
+    vpcSubnets:
+      - rdr-ipi-mjturek-test-subnet
     zone: ${POWERVS_ZONE}
     serviceInstanceID: ${SERVICE_INSTANCE_GUID}
-#   cloudConnectionName: cloud-con-rdr-hamzy-test1-syd04-57kpj
 #capabilities:
 #  baselineCapabilitySet: None
 #  additionalEnabledCapabilities:
@@ -328,8 +329,8 @@ platform:
 #    - Console
 #    - Insights
 #    - NodeTuning
-publish: External
-#publish: Internal
+# publish: External
+publish: Internal
 pullSecret: '${PULL_SECRET}'
 sshKey: |
   ${SSH_KEY}
